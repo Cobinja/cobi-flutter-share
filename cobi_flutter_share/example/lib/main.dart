@@ -51,17 +51,58 @@ class _MyHomePageState extends State<MyHomePage> {
     // await File(filename).writeAsBytes(buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
     await CobiFlutterShare.instance.addDirectShareTarget(
       DirectShareTarget(
-        id: "hallo",
+        id: "hello",
         categories: ["de.cobinja.CATEGORY_ONE"],
-        longLabel: "Hallo, Welt!",
-        shortLabel: "Hallo",
+        longLabel: "Hello!",
+        shortLabel: "Hello",
+        imageBytes: buffer.asUint8List()
+      )
+    );
+    await CobiFlutterShare.instance.addDirectShareTarget(
+      DirectShareTarget(
+        id: "world",
+        categories: ["de.cobinja.CATEGORY_ONE"],
+        longLabel: "World!",
+        shortLabel: "World",
         imageBytes: buffer.asUint8List()
       )
     );
   }
   
+  void addMultipleShareTargets() async {
+    var data = await rootBundle.load('assets/24.bmp');
+    // Directory dir = await getApplicationSupportDirectory();
+    // String filename = dir.path + "/image.png";
+    var buffer = data.buffer;
+    // await File(filename).writeAsBytes(buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
+    var targets = [
+      DirectShareTarget(
+        id: "foo",
+        categories: ["de.cobinja.CATEGORY_ONE"],
+        longLabel: "Hello!",
+        shortLabel: "Hello",
+        imageBytes: buffer.asUint8List()
+      ),
+      DirectShareTarget(
+        id: "bar",
+        categories: ["de.cobinja.CATEGORY_ONE"],
+        longLabel: "Hello!",
+        shortLabel: "Hello",
+        imageBytes: buffer.asUint8List()
+      )
+    ];
+    await CobiFlutterShare.instance.addDirectShareTargets(targets);
+  }
+  
   void _removeShareTarget() async {
-    await CobiFlutterShare.instance.removeShareTarget("hallo");
+    await CobiFlutterShare.instance.removeShareTarget("hello");
+    setState(() {
+      _data = null;
+    });
+  }
+  
+  void _removeAllShareTargets() async {
+    await CobiFlutterShare.instance.removeAllShareTargets();
     setState(() {
       _data = null;
     });
@@ -80,11 +121,15 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             ElevatedButton(
               onPressed: _addShareTarget,
-              child: Text("Publish share target")
+              child: Text("Publish 2 share targets")
             ),
             ElevatedButton(
               onPressed: _removeShareTarget,
-              child: Text("Remove sharet target")
+              child: Text("Remove share target 'hello'")
+            ),
+            ElevatedButton(
+              onPressed: _removeAllShareTargets,
+              child: Text("Remove all share targets")
             ),
             Text("Data:"),
             Text(_data?.toJson().toString() ?? "No data received"),

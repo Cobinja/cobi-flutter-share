@@ -190,9 +190,9 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
 
   @Override
   public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-    if (call.method.equals("addDirectShareTarget")) {
-      JSONObject target = call.argument("target");
-      result.success(addShareTarget(target));
+    if (call.method.equals("addDirectShareTargets")) {
+      JSONArray targets = call.argument("targets");
+      result.success(addMultipleShareTargets(targets));
     }
     if (call.method.equals("removeDirectShareTarget")) {
       String id = call.arguments();
@@ -202,12 +202,37 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
           result.success(true);
         }
         catch (Exception e) {
+          Log.e(TAG, "onMethodCall: Failed to remove share target '" + id + "'", e);
           result.success(false);
         }
         return;
       }
       result.success(false);
     }
+    if (call.method.equals("removeAllShareTargets")) {
+      try {
+        removeAllShareTargets();
+        result.success(true);
+      }
+      catch (Exception e) {
+        Log.e(TAG, "onMethodCall: Failed to remove all share targets", e);
+        result.success(false);
+      }
+    }
+  }
+  
+  boolean addMultipleShareTargets(JSONArray targets) {
+    boolean result = true;
+    for (int i = 0; i < targets.length(); i++) {
+      try {
+        JSONObject target = targets.getJSONObject(i);
+        result = result && addShareTarget(target);
+      }
+      catch (JSONException e) {
+        Log.e(TAG, "addMultipleShareTargets: Could not read array item", e);
+      }
+    }
+    return result;
   }
   
   boolean addShareTarget(JSONObject target) {
@@ -318,6 +343,11 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
     list.add(id);
     Log.d(TAG, "removeShareTarget: id " + id);
     ShortcutManagerCompat.removeDynamicShortcuts(context, list);
+  }
+  
+  private void removeAllShareTargets() {
+    Log.d(TAG, "removeAllShareTargets");
+    ShortcutManagerCompat.removeAllDynamicShortcuts(context);
   }
   
   private String loadAssetKey(@NonNull String key) {

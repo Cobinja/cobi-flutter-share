@@ -46,12 +46,14 @@ abstract class CobiFlutterSharePlatform extends PlatformInterface {
   
   void _verifyProvidesDefaultImplementations() {}
   
-  /// This adds a direct share target.
-  /// The returned future resolves to false if the target could not be added
-  Future<bool?> addDirectShareTarget(DirectShareTarget target);
+  /// This adds multiple share targets.
+  /// The returned future resolves to false if at least one of the targets could not be added.
+  Future<bool?> addDirectShareTargets(List<DirectShareTarget> targets);
   /// This removes the share target with given identifier.
   /// If the share target couldn't be removed or did not exist the returned future resolves to false.
   Future<bool?> removeDirectShareTarget(String id);
+  
+  Future<bool?> removeAllShareTargets();
   
   Stream<ShareData> get onShareReceived;
 }

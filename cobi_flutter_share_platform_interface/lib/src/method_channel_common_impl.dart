@@ -21,9 +21,9 @@ class CobiFlutterShareMethodChannelImpl extends CobiFlutterSharePlatform {
   }
   
   @override
-  Future<bool?> addDirectShareTarget(DirectShareTarget target) async {
-    return _methodChannel.invokeMethod<bool>("addDirectShareTarget", {
-      "target": target.toJson()
+  Future<bool?> addDirectShareTargets(List<DirectShareTarget> targets) async {
+    return _methodChannel.invokeMethod<bool>("addDirectShareTargets", {
+      "targets": targets
     });
   }
   
@@ -33,5 +33,10 @@ class CobiFlutterShareMethodChannelImpl extends CobiFlutterSharePlatform {
   @override
   Future<bool?> removeDirectShareTarget(String id) {
     return _methodChannel.invokeMethod("removeDirectShareTarget", id);
+  }
+  
+  @override
+  Future<bool?> removeAllShareTargets() {
+    return _methodChannel.invokeMethod("removeAllShareTargets");
   }
 }

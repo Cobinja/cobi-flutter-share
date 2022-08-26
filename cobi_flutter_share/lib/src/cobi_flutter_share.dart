@@ -28,15 +28,29 @@ class CobiFlutterShare {
   /// The returned future resolves to false if the target could not be added.
   /// If you want to update an existing share target, re-add it with the same [DirectShareTarget.id].
   Future<bool?> addDirectShareTarget(DirectShareTarget target) {
-    return _platform.addDirectShareTarget(target);
+    return addDirectShareTargets([target]);
   }
   
-  /// This removes the direct share target identified by [id]
+  /// This adds multiple share targets in one go.
+  /// The returned future resolves to false if the target could not be added.
+  /// If you want to update an existing share target, re-add it with the same [DirectShareTarget.id].
+  Future<bool?> addDirectShareTargets(List<DirectShareTarget> targets) {
+    return _platform.addDirectShareTargets(targets);
+  }
+  
+  /// This removes the direct share target identified by [id].
   /// If anything goes wrong when removing it the returned future resolves to false.
   Future<bool?> removeShareTarget(String id) {
     return _platform.removeDirectShareTarget(id);
   }
   
-  /// This [Stream] is a broadcast stream that informs you about incoming shared data
+  /// This removes all direct share targets.
+  /// It does not remove the general share target for the app.
+  /// If anything goes wrong when removing them the returned future resolves to false.
+  Future<bool?> removeAllShareTargets() {
+    return _platform.removeAllShareTargets();
+  }
+  
+  /// This [Stream] is a broadcast stream that informs you about incoming shared data.
   Stream<ShareData> get onShareReceived => _platform.onShareReceived;
 }

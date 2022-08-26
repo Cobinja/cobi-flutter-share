@@ -1,6 +1,6 @@
 name: cobi_flutter_share_android
 description: The Android implementation of the cobi_flutter_share plugin.
-version: 1.0.1
+version: 1.1.0
 homepage: https://github.com/Cobinja/cobi-flutter-share/tree/main/cobi_flutter_share_android
 
 environment:
@@ -10,7 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cobi_flutter_share_platform_interface: ^1.0.1
+  cobi_flutter_share_platform_interface: ^1.1.0
 
 dev_dependencies:
   flutter_test:
