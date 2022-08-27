@@ -94,8 +94,15 @@ class _MyHomePageState extends State<MyHomePage> {
     await CobiFlutterShare.instance.addShareTargets(targets);
   }
   
-  void _removeShareTarget() async {
+  void _removeSingleShareTarget() async {
     await CobiFlutterShare.instance.removeShareTarget("hello");
+    setState(() {
+      _data = null;
+    });
+  }
+  
+  void _removeMultipleShareTargets() async {
+    await CobiFlutterShare.instance.removeShareTargets(["foo", "bar"]);
     setState(() {
       _data = null;
     });
@@ -126,12 +133,17 @@ class _MyHomePageState extends State<MyHomePage> {
             Divider(),
             ElevatedButton(
               onPressed: _addMultipleShareTargets,
-                child: Text("Publish share targets\n'foo' and 'bar'\nin one go", textAlign: TextAlign.center)
+                child: Text("Publish share targets\n'foo' and 'bar'\nin one step", textAlign: TextAlign.center)
             ),
             Divider(),
             ElevatedButton(
-              onPressed: _removeShareTarget,
+              onPressed: _removeSingleShareTarget,
               child: Text("Remove share target 'hello'")
+            ),
+            Divider(),
+            ElevatedButton(
+              onPressed: _removeMultipleShareTargets,
+              child: Text("Remove share targets 'foo' and 'bar'")
             ),
             Divider(),
             ElevatedButton(

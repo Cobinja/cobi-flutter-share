@@ -31,8 +31,8 @@ class CobiFlutterShareMethodChannelImpl extends CobiFlutterSharePlatform {
   Stream<ShareData> get onShareReceived => _streamControllerReceivedData.stream;
   
   @override
-  Future<bool?> removeShareTarget(String id) {
-    return _methodChannel.invokeMethod("removeShareTarget", id);
+  Future<bool?> removeShareTargets(List<String> ids) {
+    return _methodChannel.invokeMethod("removeShareTargets", ids);
   }
   
   @override

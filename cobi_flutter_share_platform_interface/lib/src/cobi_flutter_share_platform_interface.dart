@@ -50,9 +50,11 @@ abstract class CobiFlutterSharePlatform extends PlatformInterface {
   /// The returned future resolves to false if at least one of the targets could not be added.
   Future<bool?> addShareTargets(List<ShareTarget> targets);
   /// This removes the share target with given identifier.
-  /// If the share target couldn't be removed or did not exist the returned future resolves to false.
-  Future<bool?> removeShareTarget(String id);
+  /// If any of the share targets couldn't be removed the returned future resolves to false.
+  Future<bool?> removeShareTargets(List<String> ids);
   
+  /// This removes all specific share targets.
+  /// If anythign goes wrong, the returned future resolves to false.
   Future<bool?> removeAllShareTargets();
   
   Stream<ShareData> get onShareReceived;

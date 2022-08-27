@@ -194,15 +194,15 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
       JSONArray targets = call.argument("targets");
       result.success(addMultipleShareTargets(targets));
     }
-    if (call.method.equals("removeShareTarget")) {
-      String id = call.arguments();
-      if (id != null) {
+    if (call.method.equals("removeShareTargets")) {
+      JSONArray ids = call.arguments();
+      if (ids != null) {
         try {
-          removeShareTarget(id);
-          result.success(true);
+          boolean success = removeShareTargets(ids);
+          result.success(success);
         }
         catch (Exception e) {
-          Log.e(TAG, "onMethodCall: Failed to remove share target '" + id + "'", e);
+          Log.e(TAG, "onMethodCall: Failed to remove share targets '" + ids + "'", e);
           result.success(false);
         }
         return;
@@ -338,11 +338,22 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
     return result;
   }
   
-  private void removeShareTarget(String id) {
+  private boolean removeShareTargets(JSONArray ids) {
     List<String> list = new ArrayList<>();
-    list.add(id);
-    Log.d(TAG, "removeShareTarget: id " + id);
+    boolean result = true;
+    for (int i = 0; i < ids.length(); i++) {
+      try {
+        String id = ids.getString(i);
+        list.add(id);
+      }
+      catch (JSONException e)  {
+        Log.e(TAG, "removeShareTargets: Failed to parse id", e);
+        result = false;
+      }
+    }
+    Log.d(TAG, "removeShareTargets: ids " + list);
     ShortcutManagerCompat.removeDynamicShortcuts(context, list);
+    return result;
   }
   
   private void removeAllShareTargets() {
