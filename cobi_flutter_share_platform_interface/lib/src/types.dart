@@ -18,7 +18,7 @@ enum ShareItemType {
 /// 2. [imageByFilename]
 /// 3. [imageBytes]
 @JsonSerializable()
-class DirectShareTarget {
+class ShareTarget {
   /// A uniwue identifier.
   /// If you want to update an existing share target, re-add it with the same id.
   String id;
@@ -33,7 +33,7 @@ class DirectShareTarget {
   /// image for the share sheet as filename on disk.
   String? imageByFilename;
   
-  DirectShareTarget({
+  ShareTarget({
     required this.id,
     required this.categories,
     this.shortLabel,
@@ -43,8 +43,8 @@ class DirectShareTarget {
     this.imageByFilename
   });
   
-  factory DirectShareTarget.fromJson(Map<String, dynamic> json) => _$DirectShareTargetFromJson(json);
-  Map<String, dynamic> toJson() => _$DirectShareTargetToJson(this);
+  factory ShareTarget.fromJson(Map<String, dynamic> json) => _$ShareTargetFromJson(json);
+  Map<String, dynamic> toJson() => _$ShareTargetToJson(this);
 }
 
 /// This defines shared items which will be given inside a [ShareData] object
@@ -72,8 +72,8 @@ class ShareItem {
 
 @JsonSerializable()
 class ShareData {
-  /// The share target id, as used in [DirectShareTarget].
-  /// If no id is present, the items were shared via the general share item for your app, not a direct share target.
+  /// The share target id, as used in [ShareTarget].
+  /// If no id is present, the items were shared via the general share item for your app, not a specific share target.
   String? id;
   /// A list of shared items.
   List<ShareItem> items;

@@ -190,11 +190,11 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
 
   @Override
   public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-    if (call.method.equals("addDirectShareTargets")) {
+    if (call.method.equals("addShareTargets")) {
       JSONArray targets = call.argument("targets");
       result.success(addMultipleShareTargets(targets));
     }
-    if (call.method.equals("removeDirectShareTarget")) {
+    if (call.method.equals("removeShareTarget")) {
       String id = call.arguments();
       if (id != null) {
         try {

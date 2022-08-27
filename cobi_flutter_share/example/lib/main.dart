@@ -43,14 +43,14 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _addShareTarget() async{
+  void _addShareTargets() async{
     var data = await rootBundle.load('assets/24.bmp');
     // Directory dir = await getApplicationSupportDirectory();
     // String filename = dir.path + "/image.png";
     var buffer = data.buffer;
     // await File(filename).writeAsBytes(buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
-    await CobiFlutterShare.instance.addDirectShareTarget(
-      DirectShareTarget(
+    await CobiFlutterShare.instance.addShareTarget(
+      ShareTarget(
         id: "hello",
         categories: ["de.cobinja.CATEGORY_ONE"],
         longLabel: "Hello!",
@@ -58,8 +58,8 @@ class _MyHomePageState extends State<MyHomePage> {
         imageBytes: buffer.asUint8List()
       )
     );
-    await CobiFlutterShare.instance.addDirectShareTarget(
-      DirectShareTarget(
+    await CobiFlutterShare.instance.addShareTarget(
+      ShareTarget(
         id: "world",
         categories: ["de.cobinja.CATEGORY_ONE"],
         longLabel: "World!",
@@ -69,29 +69,29 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
   
-  void addMultipleShareTargets() async {
+  void _addMultipleShareTargets() async {
     var data = await rootBundle.load('assets/24.bmp');
     // Directory dir = await getApplicationSupportDirectory();
     // String filename = dir.path + "/image.png";
     var buffer = data.buffer;
     // await File(filename).writeAsBytes(buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
     var targets = [
-      DirectShareTarget(
+      ShareTarget(
         id: "foo",
         categories: ["de.cobinja.CATEGORY_ONE"],
-        longLabel: "Hello!",
-        shortLabel: "Hello",
+        longLabel: "Foo!",
+        shortLabel: "Foo",
         imageBytes: buffer.asUint8List()
       ),
-      DirectShareTarget(
+      ShareTarget(
         id: "bar",
         categories: ["de.cobinja.CATEGORY_ONE"],
-        longLabel: "Hello!",
-        shortLabel: "Hello",
+        longLabel: "Bar!",
+        shortLabel: "Bar",
         imageBytes: buffer.asUint8List()
       )
     ];
-    await CobiFlutterShare.instance.addDirectShareTargets(targets);
+    await CobiFlutterShare.instance.addShareTargets(targets);
   }
   
   void _removeShareTarget() async {
@@ -120,17 +120,26 @@ class _MyHomePageState extends State<MyHomePage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             ElevatedButton(
-              onPressed: _addShareTarget,
-              child: Text("Publish 2 share targets")
+              onPressed: _addShareTargets,
+              child: Text("Publish share targets\n'hello' and 'world'\nin two single steps", textAlign: TextAlign.center)
             ),
+            Divider(),
+            ElevatedButton(
+              onPressed: _addMultipleShareTargets,
+                child: Text("Publish share targets\n'foo' and 'bar'\nin one go", textAlign: TextAlign.center)
+            ),
+            Divider(),
             ElevatedButton(
               onPressed: _removeShareTarget,
               child: Text("Remove share target 'hello'")
             ),
+            Divider(),
             ElevatedButton(
               onPressed: _removeAllShareTargets,
               child: Text("Remove all share targets")
             ),
+            Divider(),
+            Divider(),
             Text("Data:"),
             Text(_data?.toJson().toString() ?? "No data received"),
           ],

@@ -10,7 +10,7 @@ class CobiFlutterShare {
   
   static CobiFlutterShare? _instance;
   
-  /// This returns a singleton that controls direct share targets and received shared data
+  /// This returns a singleton that controls share targets and received shared data
   static CobiFlutterShare get instance => _getInstance();
   
   late CobiFlutterSharePlatform _platform;
@@ -24,27 +24,27 @@ class CobiFlutterShare {
     return _instance!;
   }
   
-  /// This method adds a direct share target defined with [DirectShareTarget]
+  /// This method adds a share target defined with [ShareTarget]
   /// The returned future resolves to false if the target could not be added.
-  /// If you want to update an existing share target, re-add it with the same [DirectShareTarget.id].
-  Future<bool?> addDirectShareTarget(DirectShareTarget target) {
-    return addDirectShareTargets([target]);
+  /// If you want to update an existing share target, re-add it with the same [ShareTarget.id].
+  Future<bool?> addShareTarget(ShareTarget target) {
+    return addShareTargets([target]);
   }
   
   /// This adds multiple share targets in one go.
   /// The returned future resolves to false if the target could not be added.
-  /// If you want to update an existing share target, re-add it with the same [DirectShareTarget.id].
-  Future<bool?> addDirectShareTargets(List<DirectShareTarget> targets) {
-    return _platform.addDirectShareTargets(targets);
+  /// If you want to update an existing share target, re-add it with the same [ShareTarget.id].
+  Future<bool?> addShareTargets(List<ShareTarget> targets) {
+    return _platform.addShareTargets(targets);
   }
   
-  /// This removes the direct share target identified by [id].
+  /// This removes the share target identified by [id].
   /// If anything goes wrong when removing it the returned future resolves to false.
   Future<bool?> removeShareTarget(String id) {
-    return _platform.removeDirectShareTarget(id);
+    return _platform.removeShareTarget(id);
   }
   
-  /// This removes all direct share targets.
+  /// This removes all share targets.
   /// It does not remove the general share target for the app.
   /// If anything goes wrong when removing them the returned future resolves to false.
   Future<bool?> removeAllShareTargets() {

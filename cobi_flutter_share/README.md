@@ -1,7 +1,7 @@
 This plugin makes the Android the share feature available to Flutter for incoming shares.
 ## Features
 - general shares
-- direct share targets
+- specific share targets
 ## Usage
 To use this plugin you need to add the following to the main activity in your manifest.xml on Android.
 The activity needs:
@@ -26,9 +26,9 @@ To receive multiple files in one go, add the following:
 ```
 You need one ```intent-filter``` filter per ```mimeType``` filter.
 
-### Direct share targets
+### Share targets
 
-For direct share targets you need to create an xml file in your resource folder, e.g. like this one:
+For share targets you need to create an xml file in your resource folder, e.g. like this one:
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <shortcuts  xmlns:android="http://schemas.android.com/apk/res/android">

@@ -6,8 +6,7 @@ part of 'types.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-DirectShareTarget _$DirectShareTargetFromJson(Map<String, dynamic> json) =>
-    DirectShareTarget(
+ShareTarget _$ShareTargetFromJson(Map<String, dynamic> json) => ShareTarget(
       id: json['id'] as String,
       categories: (json['categories'] as List<dynamic>)
           .map((e) => e as String)
@@ -20,7 +19,7 @@ DirectShareTarget _$DirectShareTargetFromJson(Map<String, dynamic> json) =>
       imageByFilename: json['imageByFilename'] as String?,
     );
 
-Map<String, dynamic> _$DirectShareTargetToJson(DirectShareTarget instance) {
+Map<String, dynamic> _$ShareTargetToJson(ShareTarget instance) {
   final val = <String, dynamic>{
     'id': instance.id,
   };
@@ -48,7 +47,7 @@ ShareItem _$ShareItemFromJson(Map<String, dynamic> json) => ShareItem(
 
 Map<String, dynamic> _$ShareItemToJson(ShareItem instance) => <String, dynamic>{
       'data': instance.data,
-      'type': _$ShareItemTypeEnumMap[instance.type],
+      'type': _$ShareItemTypeEnumMap[instance.type]!,
       'mimeType': instance.mimeType,
     };
 
