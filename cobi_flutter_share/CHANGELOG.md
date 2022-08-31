@@ -1,3 +1,6 @@
+[2.0.1]
+* Publish SHareItemType on the frontned
+
 [2.0.0]
 * add ability to remove mutiple share targets in one step
 * refactored method names to be more platform-agnostic
