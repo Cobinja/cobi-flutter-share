@@ -4,10 +4,15 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.ParcelFileDescriptor;
+import android.provider.OpenableColumns;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -20,6 +25,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -60,6 +66,8 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
   
   private Map<String, Object> initialShareData = null;
   
+  private Map<String, FetchOp> fetchOps = new HashMap<>();
+  
   public static void registerWith(PluginRegistry.Registrar registrar) {
     final CobiFlutterShareAndroidPlugin plugin = new CobiFlutterShareAndroidPlugin();
     plugin.registrar = registrar;
@@ -70,7 +78,7 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
     methodChannel = new MethodChannel(binaryMessenger, "de.cobinja/ShareMethods", JSONMethodCodec.INSTANCE);
     methodChannel.setMethodCallHandler(this);
     
-    eventChannel = new EventChannel(binaryMessenger, "de.cobinja/ShareEvents", JSONMethodCodec.INSTANCE);
+    eventChannel = new EventChannel(binaryMessenger, "de.cobinja/ShareEvents"); //, JSONMethodCodec.INSTANCE);
     eventChannel.setStreamHandler(this);
   }
   
@@ -118,6 +126,33 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
     activityBinding.removeOnNewIntentListener(this);
   }
   
+  private String getBasename(Uri uri) {
+    String result = null;
+    if (uri.getScheme().equals("content")) {
+      Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
+      try {
+        if (cursor != null && cursor.moveToFirst()) {
+          int columnIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+          if (columnIndex >= 0) {
+            result = cursor.getString(columnIndex);
+          }
+        }
+      } finally {
+        if (cursor != null) {
+          cursor.close();
+        }
+      }
+    }
+    if (result == null) {
+      result = uri.getPath();
+      int cut = result.lastIndexOf('/');
+      if (cut != -1) {
+        result = result.substring(cut + 1);
+      }
+    }
+    return result;
+  }
+  
   private Map<String, String> getShareItemFromUri(Uri uri) {
     if (uri == null) {
       return null;
@@ -127,6 +162,7 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
     result.put("data", uri.toString());
     result.put("mimeType", cr.getType(uri));
     result.put("type", ShareItemTypes.FILE.toString());
+    result.put("basename", getBasename(uri));
     return result;
   }
   
@@ -138,7 +174,7 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
     }
     
     Map<String, Object> result = new HashMap<>();
-  
+    result.put("eventType", "receivedShare");
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
       if (intent.hasExtra(Intent.EXTRA_SHORTCUT_ID)) {
         result.put("id", intent.getStringExtra(ShortcutManagerCompat.EXTRA_SHORTCUT_ID));
@@ -194,7 +230,7 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
       JSONArray targets = call.argument("targets");
       result.success(addMultipleShareTargets(targets));
     }
-    if (call.method.equals("removeShareTargets")) {
+    else if (call.method.equals("removeShareTargets")) {
       JSONArray ids = call.arguments();
       if (ids != null) {
         try {
@@ -209,7 +245,7 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
       }
       result.success(false);
     }
-    if (call.method.equals("removeAllShareTargets")) {
+    else if (call.method.equals("removeAllShareTargets")) {
       try {
         removeAllShareTargets();
         result.success(true);
@@ -217,6 +253,37 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
       catch (Exception e) {
         Log.e(TAG, "onMethodCall: Failed to remove all share targets", e);
         result.success(false);
+      }
+    }
+    else if (call.method.equals("fetchContents")) {
+      String uri = call.argument("uri");
+      int chunkSize = (int) (call.argument("chunkSize"));
+      Log.d(TAG, "onMethodCall: start fetching contents for " + uri);
+      fetchContents(uri, chunkSize);
+    }
+    else if (call.method.equals("continueFetch")) {
+      String uri = call.argument("uri");
+      setFetchOpStatus(uri, FetchStatus.RUNNING);
+    }
+    else if (call.method.equals("abortFetch")) {
+      String uri = call.argument("uri");
+      setFetchOpStatus(uri, FetchStatus.ABORTED);
+    }
+    else if (call.method.equals("pauseFetch")) {
+      String uri = call.argument("uri");
+      setFetchOpStatus(uri, FetchStatus.PAUSED);
+    }
+    else {
+      result.notImplemented();
+    }
+  }
+  
+  void setFetchOpStatus(String uri, FetchStatus status) {
+    FetchOp op = fetchOps.get(uri);
+    if (op != null) {
+      op.status = status;
+      synchronized (op.lock) {
+        op.lock.notify();
       }
     }
   }
@@ -395,6 +462,103 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
     return null;
   }
   
+  void fetchContents(String uriString, int chunkSize) {
+    Handler handler = new Handler(Looper.getMainLooper());
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        if (eventSink == null) {
+          return;
+        }
+        Runtime runtime = Runtime.getRuntime();
+        long usedMem = (runtime.totalMemory() - runtime.freeMemory());
+        long maxHeapSize = runtime.maxMemory();
+        long availHeapSize = maxHeapSize - usedMem;
+        Log.d(TAG, "fetchContents::run: availHeapSize: " + availHeapSize);
+        FetchOp op = new FetchOp();
+        try {
+          Uri uri = Uri.parse(uriString);
+          ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "r");
+          long fileSize = pfd.getStatSize();
+          long totalRead = 0;
+          Log.d(TAG, "fetchContents::run: chunkSize: " + chunkSize + ", fileSize: " + fileSize);
+          int usedChunkSize = chunkSize;
+          
+          if (chunkSize <= 0) {
+            usedChunkSize = 10 * 1024 * 1024;
+            
+            if ((fileSize > 0) && (fileSize <= Integer.MAX_VALUE) && fileSize <= ((double)(availHeapSize) / 3)) {
+              usedChunkSize = (int) fileSize;
+            }
+          }
+          
+          BufferedInputStream bufStream = new BufferedInputStream(new ParcelFileDescriptor.AutoCloseInputStream(pfd), usedChunkSize);
+          int counter = 0;
+          byte[] chunk = new byte[usedChunkSize];
+          op.status = FetchStatus.RUNNING;
+          fetchOps.put(uriString, op);
+          
+          while (totalRead < fileSize) {
+            synchronized (op.lock) {
+              if (op.status == FetchStatus.ABORTED) {
+                break;
+              }
+              if (op.status == FetchStatus.PAUSED) {
+                op.lock.wait();
+              }
+  
+              int readSize = bufStream.read(chunk);
+              totalRead += readSize;
+              if (readSize <= 0) {
+                op.status = FetchStatus.FINISHED;
+                break;
+              }
+  
+              Map<String, Object> event = new HashMap<>();
+              event.put("eventType", "fileContents");
+              event.put("uri", uriString);
+  
+              if (readSize < chunkSize) {
+                byte[] tmpAr = new byte[readSize];
+                System.arraycopy(chunk, 0, tmpAr, 0, readSize);
+                chunk = tmpAr;
+              }
+  
+              event.put("chunk", chunk);
+              event.put("index", counter);
+              boolean done = totalRead >= fileSize;
+              if (done) {
+                event.put("done", "true");
+              }
+              counter++;
+  
+              // let the event channel do its job on the UI thread
+              Runnable r = new Runnable() {
+                @Override
+                public void run() {
+                  if (op.status == FetchStatus.RUNNING && event.containsKey("done") && event.get("done") == "true") {
+                    op.status = FetchStatus.FINISHED;
+                  }
+                  eventSink.success(event);
+                }
+              };
+              handler.post(r);
+
+              if (!done) {
+                op.lock.wait();
+              }
+            }
+          }
+          bufStream.close();
+        }
+        catch (Exception e) {
+          op.status = FetchStatus.FAILED;
+          Log.e(TAG, "fetchContent: Could not read file", e);
+        }
+      }
+    }).start();
+  }
+  
   @Override
   public void onListen(Object arguments, EventChannel.EventSink events) {
     eventSink = events;
@@ -413,5 +577,19 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
   private enum ShareItemTypes {
     FILE,
     TEXT
+  }
+  
+  private enum FetchStatus {
+    INITLIALIZING,
+    RUNNING,
+    PAUSED,
+    ABORTED,
+    FINISHED,
+    FAILED
+  }
+  
+  private class FetchOp {
+    public final Object lock = new Object();
+    public FetchStatus status = FetchStatus.INITLIALIZING;
   }
 }

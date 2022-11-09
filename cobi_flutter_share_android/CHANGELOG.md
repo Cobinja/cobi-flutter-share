@@ -1,3 +1,6 @@
+[2.1.0]
+* add ability to fetch contents of shared files
+
 [2.0.0]
 * add ability to remove mutiple share targets in one step
 * refactored method names to be more platform-agnostic

@@ -2,7 +2,7 @@ name: cobi_flutter_share_platform_interface
 description: The common platform interface for the cobi_flutter_share plugin.
 # NOTE: We strongly prefer non-breaking changes, even at the expense of a
 # less-clean API. See https://flutter.dev/go/platform-interface-breaking-changes
-version: 2.0.0
+version: 2.1.0
 homepage: https://github.com/Cobinja/cobi-flutter-share/tree/main/cobi_flutter_share_platform_interface
 
 environment:
@@ -12,7 +12,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  json_annotation: ^4.5.0
+  json_annotation: ^4.6.0
   plugin_platform_interface: ^2.0.0
 
 dev_dependencies:

@@ -1,3 +1,6 @@
+[2.1.0]
+* add ability to fetch contents of shared files
+
 [2.0.1]
 * Publish SHareItemType on the frontned
 

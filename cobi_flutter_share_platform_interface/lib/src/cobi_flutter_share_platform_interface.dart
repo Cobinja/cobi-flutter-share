@@ -58,4 +58,9 @@ abstract class CobiFlutterSharePlatform extends PlatformInterface {
   Future<bool?> removeAllShareTargets();
   
   Stream<ShareData> get onShareReceived;
+  
+  Stream<ShareItemChunk>? fetchContents(String uri, [int? chunkSize]);
+  Future<void> pauseFetch(String uri);
+  Future<void> continueFetch(String uri);
+  Future<void> abortFetch(String uri);
 }

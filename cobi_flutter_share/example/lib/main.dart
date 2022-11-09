@@ -34,12 +34,33 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   
   ShareData? _data;
+  ShareItem? _currentFetch;
   
   _MyHomePageState() {
-    CobiFlutterShare.instance.onShareReceived.listen((event) {
+    CobiFlutterShare.instance.onShareReceived.listen((event) async {
       setState(() {
         _data = event;
       });
+      for (ShareItem item in event.items) {
+        print("receiving item: ${item.basename}, type: ${item.type}, mimeType: ${item.mimeType}");
+        DateTime start = DateTime.now();
+        print("Start: $start");
+        setState(() {
+          _currentFetch = item;
+        });
+        item.getContents()?.listen((chunk) {
+          print("${item.basename}: received chunk ${chunk.index}");
+        },
+        onDone: () {
+          DateTime end = DateTime.now();
+          Duration diff = end.difference(start);
+          print("End: $end");
+          print("It took $diff");
+          setState(() {
+            _currentFetch = null;
+          });
+        },);
+      }
     });
   }
 
@@ -114,6 +135,18 @@ class _MyHomePageState extends State<MyHomePage> {
       _data = null;
     });
   }
+  
+  void _pauseCurrentFetch() {
+    _currentFetch?.pauseFetch();
+  }
+  
+  void _continueCurrentFetch() {
+    _currentFetch?.continueFetch();
+  }
+  
+  void _abortCurrentFetch() {
+    _currentFetch?.abortFetch();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -149,6 +182,19 @@ class _MyHomePageState extends State<MyHomePage> {
             ElevatedButton(
               onPressed: _removeAllShareTargets,
               child: Text("Remove all share targets")
+            ),
+            Divider(),
+            ElevatedButton(
+              onPressed: _currentFetch != null ? _pauseCurrentFetch : null,
+              child: Text("Pause current fetch")
+            ),
+            ElevatedButton(
+              onPressed: _currentFetch != null ? _continueCurrentFetch : null,
+              child: Text("Continue current fetch")
+            ),
+            ElevatedButton(
+              onPressed: _currentFetch != null ? _abortCurrentFetch : null,
+              child: Text("Abort current fetch")
             ),
             Divider(),
             Divider(),
