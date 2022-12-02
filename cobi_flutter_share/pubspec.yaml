@@ -1,6 +1,6 @@
 name: cobi_flutter_share
 description: A plugin that offers usage for incoming shares
-version: 2.1.0
+version: 2.1.1
 homepage: https://github.com/Cobinja/cobi-flutter-share/tree/main/cobi_flutter_share
 
 environment:

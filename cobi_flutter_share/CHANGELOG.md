@@ -1,3 +1,6 @@
+[2.1.1]
+* exported ShareItemChunk from platfornm interface
+
 [2.1.0]
 * add ability to fetch contents of shared files
 
