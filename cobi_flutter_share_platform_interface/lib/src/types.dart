@@ -99,6 +99,7 @@ class ShareItem {
   /// Fetch the contents of the shared file
   /// 
   /// for {[chunkSize]}:
+  /// chunk size in bytes
   /// if set to a value <= 0: the actually used chunk size will be automatically determined based on filesize and free memory heap
   /// if set to a value > 0: this value will be used
   /// if not set: a chunk size of 10 MiB will be used
