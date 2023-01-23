@@ -4,8 +4,8 @@ import 'package:cobi_flutter_share_platform_interface/cobi_flutter_share_platfor
 class CobiFlutterShare {
   
   CobiFlutterShare._() {
-    
     _platform = CobiFlutterSharePlatform.instance;
+    _platform.initialize();
   }
   
   static CobiFlutterShare? _instance;

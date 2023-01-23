@@ -25,15 +25,11 @@ abstract class CobiFlutterSharePlatform extends PlatformInterface {
 
   /// Platform-specific plugins should set this with their own platform-specific
   /// class that extends [CobiFlutterSharePlatform] when they register themselves.
-  static set instance(CobiFlutterSharePlatform value) {
-    if (!value.isMock) {
-      try {
-        value._verifyProvidesDefaultImplementations();
-      } on NoSuchMethodError catch (_) {
-        throw AssertionError('Platform interfaces must not be implemented with `implements`');
-      }
+  static set instance(CobiFlutterSharePlatform instance) {
+    if (!instance.isMock) {
+      PlatformInterface.verify(instance, _token);
     }
-    _instance = value;
+    _instance = instance;
   }
   
   /// Only mock implementations should set this to true.
@@ -42,9 +38,8 @@ abstract class CobiFlutterSharePlatform extends PlatformInterface {
   /// other than mocks (see class docs). This property provides a backdoor for mockito mocks to
   /// skip the verification that the class isn't implemented with `implements`.
   @visibleForTesting
+  @Deprecated('Use MockPlatformInterfaceMixin instead')
   bool get isMock => false;
-  
-  void _verifyProvidesDefaultImplementations() {}
   
   /// This adds multiple share targets.
   /// The returned future resolves to false if at least one of the targets could not be added.
@@ -63,4 +58,6 @@ abstract class CobiFlutterSharePlatform extends PlatformInterface {
   Future<void> pauseFetch(String uri);
   Future<void> continueFetch(String uri);
   Future<void> abortFetch(String uri);
+  
+  void initialize();
 }

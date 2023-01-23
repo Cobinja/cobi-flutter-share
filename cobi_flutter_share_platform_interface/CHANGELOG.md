@@ -1,3 +1,6 @@
+[3.0.0]
+* Adapted DartPluginRegistrant to make it work in non-main isolates
+
 [2.1.0]
 * add ability to fetch contents of shared files
 

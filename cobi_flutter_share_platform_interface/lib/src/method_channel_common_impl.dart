@@ -13,7 +13,9 @@ class CobiFlutterShareMethodChannelImpl extends CobiFlutterSharePlatform {
   
   Map<String, StreamController<ShareItemChunk>> _fileContentStreamControllers = {};
   
-  CobiFlutterShareMethodChannelImpl() {
+  CobiFlutterShareMethodChannelImpl();
+  
+  void initialize() {
     _eventChannel.receiveBroadcastStream()
     .listen((event) async {
       if (event is Map) {

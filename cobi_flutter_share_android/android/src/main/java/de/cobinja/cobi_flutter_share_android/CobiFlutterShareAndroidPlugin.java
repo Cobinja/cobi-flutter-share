@@ -58,6 +58,7 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
   private EventChannel eventChannel;
   private Context context;
   
+  private static final Set<EventChannel.EventSink> eventSinks =  new HashSet<>();
   private EventChannel.EventSink eventSink = null;
   
   PluginRegistry.Registrar registrar;
@@ -210,11 +211,11 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
     }
     result.put("items", shareItems);
     Log.d(TAG, "handleIntent: result: " + result);
-    if (eventSink == null) {
+    if (eventSinks.size() == 0) {
       initialShareData = result;
     }
     else {
-      eventSink.success(result);
+      sendDataToSinks(result);
     }
     return true;
   }
@@ -467,7 +468,7 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
     new Thread(new Runnable() {
       @Override
       public void run() {
-        if (eventSink == null) {
+        if (eventSinks.size() == 0) {
           return;
         }
         Runtime runtime = Runtime.getRuntime();
@@ -539,7 +540,7 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
                   if (op.status == FetchStatus.RUNNING && event.containsKey("done") && event.get("done") == "true") {
                     op.status = FetchStatus.FINISHED;
                   }
-                  eventSink.success(event);
+                  sendDataToSinks(event);
                 }
               };
               handler.post(r);
@@ -559,17 +560,28 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
     }).start();
   }
   
+  void sendDataToSinks(Object data) {
+    for (EventChannel.EventSink sink : eventSinks) {
+      sink.success(data);
+    }
+  }
+  
   @Override
   public void onListen(Object arguments, EventChannel.EventSink events) {
+    if (eventSink != null && eventSink.equals(events)) {
+      return;
+    }
+    eventSinks.add(events);
     eventSink = events;
     if (initialShareData != null) {
-      eventSink.success(initialShareData);
+      events.success(initialShareData);
       initialShareData = null;
     }
   }
   
   @Override
   public void onCancel(Object arguments) {
+    eventSinks.remove(eventSink);
     eventSink.endOfStream();
     eventSink = null;
   }
