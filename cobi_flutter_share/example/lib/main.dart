@@ -42,7 +42,7 @@ class _MyHomePageState extends State<MyHomePage> {
         _data = event;
       });
       for (ShareItem item in event.items) {
-        print("receiving item: ${item.basename}, type: ${item.type}, mimeType: ${item.mimeType}");
+        print("receiving item: ${item.basename}, type: ${item.type}, mimeType: ${item.mimeType}, basename: ${item.basename}, absoluteFilename: ${item.absoluteFilename}");
         DateTime start = DateTime.now();
         print("Start: $start");
         setState(() {

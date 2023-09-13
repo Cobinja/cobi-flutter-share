@@ -20,7 +20,8 @@ class _Uint8ListConverter implements JsonConverter<Uint8List, List<int>> {
 /// This enum holds values for share types, whether it's a file or just text
 enum ShareItemType {
   FILE,
-  TEXT
+  TEXT,
+  FOLDER
 }
 
 /// This class defines share targets.
@@ -78,13 +79,17 @@ class ShareItemChunk {
 class ShareItem {
   /// The actual content
   String data;
-  /// This property tells you what the data contains, whether it's just text or a file. If it's a file on Android, this is usually a content uri
+  /// This property tells you what the data contains, whether it's just text or a file. If it's a file on Android, the property [data] usually contains a content uri
   ShareItemType type;
+  /// The actual name of the file
   String? basename;
+  /// The absolute path on the filesystem, including the basename at the end
+  String? absoluteFilename;
   /// The content mime type.
   /// Note: By this, you cannot differ between just text and a plain text file on Android. Both get the mimetype "text/plain".
   /// To differ between these two, use the [type] property.
-  String mimeType;
+  /// If the shared item is a folder, this is null, refer to [type].
+  String? mimeType;
   
   ShareItem({required this.data, required this.type, required this.mimeType});
   

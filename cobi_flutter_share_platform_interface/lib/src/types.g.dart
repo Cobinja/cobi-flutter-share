@@ -44,26 +44,19 @@ ShareItemChunk _$ShareItemChunkFromJson(Map json) => ShareItemChunk(
       const _Uint8ListConverter().fromJson(json['chunk'] as List<int>),
     );
 
-Map<String, dynamic> _$ShareItemChunkToJson(ShareItemChunk instance) {
-  final val = <String, dynamic>{
-    'index': instance.index,
-  };
-
-  void writeNotNull(String key, dynamic value) {
-    if (value != null) {
-      val[key] = value;
-    }
-  }
-
-  writeNotNull('chunk', const _Uint8ListConverter().toJson(instance.chunk));
-  return val;
-}
+Map<String, dynamic> _$ShareItemChunkToJson(ShareItemChunk instance) =>
+    <String, dynamic>{
+      'index': instance.index,
+      'chunk': const _Uint8ListConverter().toJson(instance.chunk),
+    };
 
 ShareItem _$ShareItemFromJson(Map json) => ShareItem(
       data: json['data'] as String,
       type: $enumDecode(_$ShareItemTypeEnumMap, json['type']),
-      mimeType: json['mimeType'] as String,
-    )..basename = json['basename'] as String?;
+      mimeType: json['mimeType'] as String?,
+    )
+      ..basename = json['basename'] as String?
+      ..absoluteFilename = json['absoluteFilename'] as String?;
 
 Map<String, dynamic> _$ShareItemToJson(ShareItem instance) {
   final val = <String, dynamic>{
@@ -78,13 +71,15 @@ Map<String, dynamic> _$ShareItemToJson(ShareItem instance) {
   }
 
   writeNotNull('basename', instance.basename);
-  val['mimeType'] = instance.mimeType;
+  writeNotNull('absoluteFilename', instance.absoluteFilename);
+  writeNotNull('mimeType', instance.mimeType);
   return val;
 }
 
 const _$ShareItemTypeEnumMap = {
   ShareItemType.FILE: 'FILE',
   ShareItemType.TEXT: 'TEXT',
+  ShareItemType.FOLDER: 'FOLDER',
 };
 
 ShareData _$ShareDataFromJson(Map json) => ShareData(

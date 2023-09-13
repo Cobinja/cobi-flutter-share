@@ -1,3 +1,6 @@
+[4.0.0]
+* Added support for absolute filename (with breaking changes)
+
 [3.0.0]
 * Adapted DartPluginRegistrant to make it work in non-main isolates
 

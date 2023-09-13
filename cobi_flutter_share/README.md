@@ -11,30 +11,30 @@ The activity needs:
 and 
 ```xml
 <intent-filter>
-	<action  android:name="android.intent.action.SEND" />
-	<category  android:name="android.intent.category.DEFAULT" />
-	<data  android:mimeType="*/*" />
+	<action android:name="android.intent.action.SEND" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<data android:mimeType="*/*" />
 </intent-filter>
 ```
 To receive multiple files in one go, add the following:
 ```xml
 <intent-filter>
-	<action  android:name="android.intent.action.SEND_MULTPILE" />
-	<category  android:name="android.intent.category.DEFAULT" />
-	<data  android:mimeType="*/*" />
+	<action android:name="android.intent.action.SEND_MULTPILE" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<data android:mimeType="*/*" />
 </intent-filter>
 ```
 You need one ```intent-filter``` filter per ```mimeType``` filter.
 
 ### Share targets
 
-For share targets you need to create an xml file in your resource folder, e.g. like this one:
+For share targets (e.g. for specific contacts) you need to create an xml file in your resource folder, e.g. like this one:
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
-<shortcuts  xmlns:android="http://schemas.android.com/apk/res/android">
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
 	<share-target  android:targetClass="de.cobinja.example.MainActivity">
-		<data  android:mimeType="text/plain" />
-		<category  android:name="de.cobinja.CATEGORY_ONE" />
+		<data android:mimeType="text/plain" />
+		<category android:name="de.cobinja.CATEGORY_ONE" />
 	</share-target>
 </shortcuts>
 ```

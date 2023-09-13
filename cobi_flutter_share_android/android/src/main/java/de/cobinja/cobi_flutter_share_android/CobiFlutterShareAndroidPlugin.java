@@ -1,6 +1,7 @@
 package de.cobinja.cobi_flutter_share_android;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
@@ -9,10 +10,14 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.provider.OpenableColumns;
+import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -26,6 +31,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -127,6 +133,77 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
     activityBinding.removeOnNewIntentListener(this);
   }
   
+  private String getAbsoluteFilename(Uri uri) {
+    final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
+    String path = "";
+    // DocumentProvider
+    if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
+      // ExternalStorageProvider
+      if (isExternalStorageDocument(uri)) {
+        final String docId = DocumentsContract.getDocumentId(uri);
+        final String[] split = docId.split(":");
+        final String type = split[0];
+      
+        if ("primary".equalsIgnoreCase(type)) {
+          path = Environment.getExternalStorageDirectory() + "/" + split[1];
+        }
+      }
+      else if (isDownloadsDocument(uri)) { // DownloadsProvider
+        final String id = DocumentsContract.getDocumentId(uri);
+        //Starting with Android O, this "id" is not necessarily a long (row number),
+        //but might also be a "raw:/some/file/path" URL
+        if (id != null && id.startsWith("raw:/")) {
+          Uri rawuri = Uri.parse(id);
+          path = rawuri.getPath();
+        }
+        else {
+          String[] contentUriPrefixesToTry = new String[]{
+            "content://downloads/public_downloads",
+            "content://downloads/my_downloads"
+          };
+          for (String contentUriPrefix : contentUriPrefixesToTry) {
+            final Uri contentUri = ContentUris.withAppendedId(
+              Uri.parse(contentUriPrefix), Long.valueOf(id));
+            path = getDataColumn(context, uri, null, null);
+            if (!TextUtils.isEmpty(path)) {
+              break;
+            }
+          }
+        }
+      }
+      else if (isMediaDocument(uri)) { // MediaProvider
+        final String docId = DocumentsContract.getDocumentId(uri);
+        final String[] split = docId.split(":");
+        final String type = split[0];
+        Uri contentUri = null;
+        if ("image".equals(type)) {
+          contentUri = MediaStore.Images.Media.INTERNAL_CONTENT_URI;
+        } else if ("video".equals(type)) {
+          contentUri = MediaStore.Video.Media.INTERNAL_CONTENT_URI;
+        } else if ("audio".equals(type)) {
+          contentUri = MediaStore.Audio.Media.INTERNAL_CONTENT_URI;
+        }
+      
+        final String selection = "_id=?";
+        final String[] selectionArgs = new String[] {
+          split[1]
+        };
+      
+        path = getDataColumn(context, contentUri, selection, selectionArgs);
+      }
+      else if ("content".equalsIgnoreCase(uri.getScheme())) {
+        path = getDataColumn(context, uri, null, null);
+      }
+    }
+    else if ("content".equalsIgnoreCase(uri.getScheme())) { // MediaStore (and general)
+      path = getDataColumn(context, uri, null, null);
+    }
+    else if ("file".equalsIgnoreCase(uri.getScheme())) { // File
+      path = uri.getPath();
+    }
+    return path;
+  }
+  
   private String getBasename(Uri uri) {
     String result = null;
     if (uri.getScheme().equals("content")) {
@@ -159,11 +236,27 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
       return null;
     }
     ContentResolver cr = context.getContentResolver();
+    
+    String mimeType = cr.getType(uri);
+    String type = ShareItemTypes.FILE.toString();
+    String absName = getAbsoluteFilename(uri);
+    Log.d(TAG, "absolueFilename: " + absName);
+    if (absName != null && mimeType == null) {
+      File file = new File(absName);
+      if (file.isDirectory()) {
+        type = ShareItemTypes.FOLDER.toString();
+      }
+    }
+    
     Map<String, String> result = new HashMap<>();
     result.put("data", uri.toString());
-    result.put("mimeType", cr.getType(uri));
-    result.put("type", ShareItemTypes.FILE.toString());
+    result.put("mimeType", mimeType);
+    
+    
+    result.put("type", type);
+    
     result.put("basename", getBasename(uri));
+    result.put("absoluteFilename", absName);
     return result;
   }
   
@@ -588,7 +681,8 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
   
   private enum ShareItemTypes {
     FILE,
-    TEXT
+    TEXT,
+    FOLDER
   }
   
   private enum FetchStatus {
@@ -603,5 +697,62 @@ public class CobiFlutterShareAndroidPlugin implements FlutterPlugin, ActivityAwa
   private class FetchOp {
     public final Object lock = new Object();
     public FetchStatus status = FetchStatus.INITLIALIZING;
+  }
+  
+  /**
+   * Get the value of the data column for this Uri. This is useful for
+   * MediaStore Uris, and other file-based ContentProviders.
+   *
+   * @param context The context.
+   * @param uri The Uri to query.
+   * @param selection (Optional) Filter used in the query.
+   * @param selectionArgs (Optional) Selection arguments used in the query.
+   * @return The value of the _data column, which is typically a file path.
+   */
+  public static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
+    Cursor cursor = null;
+    String result = null;
+    final String column = "_data";
+    final String[] projection = { column };
+    try {
+      cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null);
+      Log.d(TAG, "getDataColumn: cursor: " + cursor);
+      if (cursor != null && cursor.moveToFirst()) {
+        final int index = cursor.getColumnIndex(column);
+        result = cursor.getString(index);
+      }
+    } catch (Exception ex) {
+      Log.e(TAG, "getDataColumn: Could not get data column", ex);
+    }
+    if (cursor != null) {
+      cursor.close();
+    }
+    
+    Log.d(TAG, "getDataColumn: result: " + result);
+    return result;
+  }
+  
+  /**
+   * @param uri The Uri to check.
+   * @return Whether the Uri authority is ExternalStorageProvider.
+   */
+  public static boolean isExternalStorageDocument(Uri uri) {
+    return "com.android.externalstorage.documents".equals(uri.getAuthority());
+  }
+  
+  /**
+   * @param uri The Uri to check.
+   * @return Whether the Uri authority is DownloadsProvider.
+   */
+  public static boolean isDownloadsDocument(Uri uri) {
+    return "com.android.providers.downloads.documents".equals(uri.getAuthority());
+  }
+  
+  /**
+   * @param uri The Uri to check.
+   * @return Whether the Uri authority is MediaProvider.
+   */
+  public static boolean isMediaDocument(Uri uri) {
+    return "com.android.providers.media.documents".equals(uri.getAuthority());
   }
 }
